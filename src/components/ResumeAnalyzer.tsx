@@ -15,8 +15,12 @@ export default function ResumeAnalyzer() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleAnalyze = async () => {
     setLoading(true);
+    setError(null);
+    
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -26,10 +30,27 @@ export default function ResumeAnalyzer() {
         body: JSON.stringify({ jd: jobDescription, resume }),
       });
       
+      if (!response.ok) {
+        // Try to parse error message from response if possible
+        let errorMessage;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || `Error: ${response.status} ${response.statusText}`;
+        } catch {
+          errorMessage = `Error: ${response.status} ${response.statusText}`;
+        }
+        
+        // Clear previous results and set error
+        setResult(null);
+        throw new Error(errorMessage);
+      }
+      
       const data = await response.json();
       setResult(data);
     } catch (error) {
       console.error('Error analyzing resume:', error);
+      setResult(null); // Clear any previous results
+      setError(error instanceof Error ? error.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -64,7 +85,7 @@ export default function ResumeAnalyzer() {
         </div>
       </div>
 
-      <div className="flex justify-center mb-8">
+      <div className="flex flex-col items-center mb-8 gap-4">
         <button
           onClick={handleAnalyze}
           disabled={loading || !jobDescription.trim() || !resume.trim()}
@@ -72,6 +93,13 @@ export default function ResumeAnalyzer() {
         >
           {loading ? 'Analyzing...' : 'Analyze Match'}
         </button>
+        
+        {error && (
+          <div className="text-red-600 bg-red-50 border border-red-200 rounded-md p-3 max-w-md">
+            <p className="font-medium">Error</p>
+            <p>{error}</p>
+          </div>
+        )}
       </div>
 
       {result && (

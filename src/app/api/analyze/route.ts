@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
+  let body;
+  
   try {
     // Parse the request body
-    const body = await request.json();
+    body = await request.json();
+  } catch (error) {
+    // Handle JSON parse errors specifically
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { error: 'Bad request: Malformed JSON' },
+        { status: 400 }
+      );
+    }
+    // For other unexpected errors during parsing, rethrow
+    throw error;
+  }
+  
+  try {
     const { jd, resume } = body;
 
     // Validate input
