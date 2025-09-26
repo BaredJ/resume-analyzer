@@ -32,12 +32,12 @@ export default function ResumeAnalyzer() {
       
       if (!response.ok) {
         // Try to parse error message from response if possible
-        let errorMessage;
+        let errorMessage: string = `Error: ${response.status} ${response.statusText}`;
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || `Error: ${response.status} ${response.statusText}`;
+          errorMessage = errorData.error || errorMessage;
         } catch {
-          errorMessage = `Error: ${response.status} ${response.statusText}`;
+          // Keep the default error message if JSON parsing fails
         }
         
         // Clear previous results and set error

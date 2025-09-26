@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Define the expected request payload type
+interface AnalyzeRequestPayload {
+  jd: string;
+  resume: string;
+}
+
+// Type guard to validate the request payload
+function isValidRequestPayload(payload: unknown): payload is AnalyzeRequestPayload {
+  return (
+    typeof payload === 'object' && 
+    payload !== null &&
+    'jd' in payload &&
+    'resume' in payload &&
+    typeof (payload as AnalyzeRequestPayload).jd === 'string' &&
+    typeof (payload as AnalyzeRequestPayload).resume === 'string'
+  );
+}
+
 export async function POST(request: NextRequest) {
-  let body;
+  let body: unknown;
   
   try {
     // Parse the request body
@@ -19,6 +37,15 @@ export async function POST(request: NextRequest) {
   }
   
   try {
+    // Validate the request payload
+    if (!isValidRequestPayload(body)) {
+      return NextResponse.json(
+        { error: 'Bad request: Invalid payload format. Expected {jd: string, resume: string}' },
+        { status: 400 }
+      );
+    }
+    
+    // Now we can safely use the typed payload
     const { jd, resume } = body;
 
     // Validate input
